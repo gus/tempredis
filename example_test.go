@@ -4,7 +4,7 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
-func ExampleUsage() {
+func ExampleStart() {
 	server, err := Start(Config{"databases": "8"})
 	if err != nil {
 		panic(err)

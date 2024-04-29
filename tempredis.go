@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -33,7 +32,7 @@ func Start(config Config) (server *Server, err error) {
 		config = Config{}
 	}
 
-	dir, err := ioutil.TempDir(os.TempDir(), "tempredis")
+	dir, err := os.MkdirTemp("", "tempredis")
 	if err != nil {
 		return nil, err
 	}
@@ -49,13 +48,10 @@ func Start(config Config) (server *Server, err error) {
 		dir:    dir,
 		config: config,
 	}
-	err = server.start()
-	if err != nil {
-		return server, err
-	}
-	err = server.ready()
-	if err != nil {
-		return server, err
+	if err = server.start(); err != nil {
+		return server, fmt.Errorf("starting tempredis: %w", err)
+	} else if err = server.ready(); err != nil {
+		return server, fmt.Errorf("readying tempredis: %w", err)
 	}
 	return server, nil
 }
@@ -152,7 +148,7 @@ func (s *Server) Stdout() string {
 // Stderr blocks until redis-server returns and then returns the full stdout
 // output.
 func (s *Server) Stderr() string {
-	bytes, _ := ioutil.ReadAll(s.stderr)
+	bytes, _ := io.ReadAll(s.stderr)
 	return string(bytes)
 }
 

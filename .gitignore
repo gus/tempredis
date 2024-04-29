@@ -1,1 +1,3 @@
 tempredis.test
+.envrc
+shell.nix
