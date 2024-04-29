@@ -23,6 +23,15 @@ type Server struct {
 	stderr    io.Reader
 }
 
+func orConfig(cfg Config, defs Config) Config {
+	for defk, defv := range defs {
+		if _, ok := cfg[defk]; !ok {
+			cfg[defk] = defv
+		}
+	}
+	return cfg
+}
+
 // Start initiates a new redis-server process configured with the given
 // configuration. redis-server will listen on a temporary local Unix socket. An
 // error is returned if redis-server is unable to successfully start for any
@@ -37,16 +46,13 @@ func Start(config Config) (server *Server, err error) {
 		return nil, err
 	}
 
-	if _, ok := config["unixsocket"]; !ok {
-		config["unixsocket"] = fmt.Sprintf("%s/%s", dir, "redis.sock")
-	}
-	if _, ok := config["port"]; !ok {
-		config["port"] = "0"
-	}
-
 	server = &Server{
-		dir:    dir,
-		config: config,
+		dir: dir,
+		config: orConfig(config, Config{
+			"dir":        dir,
+			"unixsocket": fmt.Sprintf("%s/%s", dir, "redis.sock"),
+			"port":       "0",
+		}),
 	}
 	if err = server.start(); err != nil {
 		return server, fmt.Errorf("starting tempredis: %w", err)
